@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from datasets import load_dataset
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import IidPartitioner
+from flwr_datasets.partitioner import DirichletPartitioner, IidPartitioner
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
 
@@ -31,7 +31,7 @@ class Net(nn.Module):
         return self.fc3(x)
 
 
-fds = None  # Cache FederatedDataset
+fds = {}  # Cache FederatedDataset instances by partition configuration
 
 pytorch_transforms = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -42,17 +42,36 @@ def apply_transforms(batch):
     return batch
 
 
-def load_data(partition_id: int, num_partitions: int, batch_size: int):
+def load_data(
+    partition_id: int,
+    num_partitions: int,
+    batch_size: int,
+    data_partition: str = "iid",
+):
     """Load partition CIFAR10 data."""
-    # Only initialize `FederatedDataset` once
+    # Cache separately so changing the run configuration cannot reuse another split.
     global fds
-    if fds is None:
-        partitioner = IidPartitioner(num_partitions=num_partitions)
-        fds = FederatedDataset(
+    cache_key = (num_partitions, data_partition)
+    if cache_key not in fds:
+        if data_partition == "iid":
+            partitioner = IidPartitioner(num_partitions=num_partitions)
+        elif data_partition == "dirichlet-0.5":
+            partitioner = DirichletPartitioner(
+                num_partitions=num_partitions,
+                partition_by="label",
+                alpha=0.5,
+                seed=42,
+            )
+        else:
+            raise ValueError(
+                "data_partition must be 'iid' or 'dirichlet-0.5', "
+                f"got {data_partition!r}"
+            )
+        fds[cache_key] = FederatedDataset(
             dataset="uoft-cs/cifar10",
             partitioners={"train": partitioner},
         )
-    partition = fds.load_partition(partition_id)
+    partition = fds[cache_key].load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
     partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
     # Construct dataloaders

@@ -56,3 +56,31 @@ helper script from the repository root:
 ```powershell
 python plot_task1.py quickstart-pytorch\output\cifar10_global_accuracy_run_<run-id>.csv
 ```
+
+## Task 3: compare IID and non-IID data
+
+The app accepts `data-partition="iid"` (the default) or
+`data-partition="dirichlet-0.5"`. Run both experiments with the same settings and
+10 clients, changing only this option. Start each command from the
+`quickstart-pytorch` directory in the same PowerShell window where the environment
+is activated and the Flower runtime variable is set.
+
+IID run:
+
+```powershell
+flwr run . local --stream `
+    --run-config 'num-server-rounds=40 local-epochs=2 learning-rate=0.001 fraction-evaluate=0.5 data-partition="iid"' `
+    --federation-config "num-supernodes=10"
+```
+
+Non-IID run (label-based Dirichlet, alpha 0.5):
+
+```powershell
+flwr run . local --stream `
+    --run-config 'num-server-rounds=40 local-epochs=2 learning-rate=0.001 fraction-evaluate=0.5 data-partition="dirichlet-0.5"' `
+    --federation-config "num-supernodes=10"
+```
+
+Record each run ID and the CSV/PNG paths printed when it finishes. Compare the
+centralized test accuracy and loss plots. All other model, training, evaluation,
+and per-client validation settings remain the Task 1 baseline settings.

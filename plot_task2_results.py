@@ -4,15 +4,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 runs = {
     2: {
-        "csv": Path("quickstart-pytorch\output\cifar10_global_accuracy_2_Clients_run_10533488357363177467.csv"),
+        "csv": Path("quickstart-pytorch\output\2 Clients Draft.csv"),
         "seconds": 444.7,  # replace with measured elapsed seconds
     },
     5: {
-        "csv": Path("quickstart-pytorch\output\cifar10_global_accuracy_5_Clients_run_15607547129308726026.csv"),
+        "csv": Path("quickstart-pytorch\output\5 Clients Draft.csv"),
         "seconds":  416.58,
     },
     10: {
-        "csv": Path("quickstart-pytorch\output\cifar10_global_accuracy_10_Clients_run_14945417753699596713.csv"),
+        "csv": Path("quickstart-pytorch\output\10 Clients Draft.csv"),
         "seconds": 416.31,
     },
 }
