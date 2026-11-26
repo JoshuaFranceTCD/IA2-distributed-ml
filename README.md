@@ -2,8 +2,7 @@
 
 ## Run the Task 1 baseline on Windows
 
-Use Python 3.12 (recommended) or 3.11. Flower's simulation support on Windows
-is experimental, and the Lab 10 instructions caution against Python 3.13 or newer.
+Use Python 3.12 (recommended) or 3.11.Lab 10 instructions caution against Python 3.13 or newer.
 From the repository root, create and activate a virtual environment, install the
 Flower app and its dependencies, set the runtime variable, then start the run:
 
