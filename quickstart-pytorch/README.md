@@ -77,12 +77,13 @@ If you are already familiar with how the Deployment Engine works, you may want t
 ## Experiment outputs
 
 After each run finishes, the server writes its centralized CIFAR-10 test accuracy
-for round 0 and each completed round to a run-specific CSV in `output/`. A PNG
-plot is generated from that CSV. The paths are printed in the run output.
+and loss for round 0 and each completed round to a run-specific CSV in `output/`.
+Separate accuracy and loss PNG plots are generated from that CSV. The paths are
+printed in the run output.
 
 To regenerate a plot from a saved CSV, run this from the `quickstart-pytorch`
 directory:
 
 ```powershell
-python ..\plot_task1_accuracy.py output\cifar10_global_accuracy_run_<run-id>.csv
+python ..\plot_task1.py output\cifar10_global_accuracy_run_<run-id>.csv
 ```

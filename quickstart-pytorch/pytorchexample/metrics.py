@@ -15,9 +15,9 @@ def save_global_accuracy_csv(
     """Write per-round centralized accuracy from Flower's result object."""
     with csv_path.open("w", newline="", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Round", "Test Accuracy"])
+        writer.writerow(["Round", "Test Accuracy", "Test Loss"])
         for server_round, metrics in sorted(server_metrics.items()):
-            writer.writerow([server_round, metrics["accuracy"]])
+            writer.writerow([server_round, metrics["accuracy"], metrics["loss"]])
 
 
 def plot_accuracy_csv(csv_path: Path, plot_path: Path) -> None:
@@ -40,6 +40,33 @@ def plot_accuracy_csv(csv_path: Path, plot_path: Path) -> None:
     ax.yaxis.set_major_formatter(PercentFormatter(xmax=1))
     ax.set_xlim(left=0)
     ax.set_ylim(0, min(1.0, max(0.65, (max(accuracies) // 0.1 + 1) / 10 + 0.05)))
+    ax.grid(True, alpha=0.3)
+    fig.savefig(plot_path, dpi=200)
+    plt.close(fig)
+
+
+def plot_loss_csv(csv_path: Path, plot_path: Path) -> None:
+    """Create the CIFAR-10 test-loss plot from a saved CSV file."""
+    rounds: list[int] = []
+    losses: list[float] = []
+    with csv_path.open(newline="", encoding="utf-8") as csv_file:
+        reader = csv.DictReader(csv_file)
+        if "Test Loss" not in (reader.fieldnames or []):
+            raise ValueError(f"No Test Loss column found in {csv_path}")
+        for row in reader:
+            rounds.append(int(row["Round"]))
+            losses.append(float(row["Test Loss"]))
+
+    if not rounds:
+        raise ValueError(f"No loss values found in {csv_path}")
+
+    fig, ax = plt.subplots(figsize=(8, 5), layout="constrained")
+    ax.plot(rounds, losses, color="#dc2626", linewidth=2, marker="o", markersize=3)
+    ax.set_title("CIFAR-10")
+    ax.set_xlabel("Round")
+    ax.set_ylabel("Test Loss")
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.3)
     fig.savefig(plot_path, dpi=200)
     plt.close(fig)

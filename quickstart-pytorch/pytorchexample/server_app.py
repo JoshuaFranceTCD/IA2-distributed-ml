@@ -7,8 +7,13 @@ from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
-from pytorchexample.metrics import plot_accuracy_csv, save_global_accuracy_csv
+from pytorchexample.metrics import (
+    plot_accuracy_csv,
+    plot_loss_csv,
+    save_global_accuracy_csv,
+)
 from pytorchexample.task import Net, load_centralized_dataset, test
+import time
 
 # Create ServerApp
 app = ServerApp()
@@ -17,6 +22,7 @@ app = ServerApp()
 @app.main()
 def main(grid: Grid, context: Context) -> None:
     """Main entry point for the ServerApp."""
+
 
     # Read run config
     fraction_evaluate: float = context.run_config["fraction-evaluate"]
@@ -30,6 +36,10 @@ def main(grid: Grid, context: Context) -> None:
     # Initialize FedAvg strategy
     strategy = FedAvg(fraction_evaluate=fraction_evaluate)
 
+    # Starting the timer
+    start = time.perf_counter()
+
+
     # Start strategy, run FedAvg for `num_rounds`
     result = strategy.start(
         grid=grid,
@@ -38,23 +48,29 @@ def main(grid: Grid, context: Context) -> None:
         num_rounds=num_rounds,
         evaluate_fn=global_evaluate,
     )
-
+    elapsed_time = time.perf_counter() - start
+    print(f"Server run time: {elapsed_time:.2f} seconds")
+    
     output_dir = Path.cwd() / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
     run_id = context.run_id
     csv_path = output_dir / f"cifar10_global_accuracy_run_{run_id}.csv"
     plot_path = output_dir / f"cifar10_global_accuracy_run_{run_id}.png"
+    loss_plot_path = output_dir / f"cifar10_global_loss_run_{run_id}.png"
 
     save_global_accuracy_csv(result.evaluate_metrics_serverapp, csv_path)
     plot_accuracy_csv(csv_path, plot_path)
+    plot_loss_csv(csv_path, loss_plot_path)
     print(f"\nGlobal test accuracy CSV saved to {csv_path}")
     print(f"CIFAR-10 test accuracy plot saved to {plot_path}")
+    print(f"CIFAR-10 test loss plot saved to {loss_plot_path}")
 
     if context.run_config["save-model"]:
         # Save final model to disk
         print("\nSaving final model to disk...")
         state_dict = result.arrays.to_torch_state_dict()
         torch.save(state_dict, "final_model.pt")
+
 
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
