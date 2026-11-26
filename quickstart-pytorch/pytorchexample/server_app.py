@@ -1,10 +1,13 @@
 """pytorchexample: A Flower / PyTorch app."""
 
+from pathlib import Path
+
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
+from pytorchexample.metrics import plot_accuracy_csv, save_global_accuracy_csv
 from pytorchexample.task import Net, load_centralized_dataset, test
 
 # Create ServerApp
@@ -35,6 +38,17 @@ def main(grid: Grid, context: Context) -> None:
         num_rounds=num_rounds,
         evaluate_fn=global_evaluate,
     )
+
+    output_dir = Path.cwd() / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    run_id = context.run_id
+    csv_path = output_dir / f"cifar10_global_accuracy_run_{run_id}.csv"
+    plot_path = output_dir / f"cifar10_global_accuracy_run_{run_id}.png"
+
+    save_global_accuracy_csv(result.evaluate_metrics_serverapp, csv_path)
+    plot_accuracy_csv(csv_path, plot_path)
+    print(f"\nGlobal test accuracy CSV saved to {csv_path}")
+    print(f"CIFAR-10 test accuracy plot saved to {plot_path}")
 
     if context.run_config["save-model"]:
         # Save final model to disk
